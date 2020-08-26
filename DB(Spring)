@@ -1,0 +1,107 @@
+package com.kopo.ju;
+
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import org.sqlite.SQLiteConfig;
+
+public class DB<T> { //DB에 Generic <T> 선언
+	private Connection connection;
+	private String dbFileName;
+	private String dbTableName;
+	static {
+		try {
+			Class.forName("org.sqlite.JDBC");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	// DB이름, 테이블이름 생성
+	public DB(String databaseFileName, String dbTableName) {
+		this.dbFileName = databaseFileName;
+		this.dbTableName = dbTableName;
+	}
+
+	// 데이터 접근
+	public boolean open() {
+		SQLiteConfig config = new SQLiteConfig();
+		try {
+			this.connection = DriverManager.getConnection("jdbc:sqlite:/" + this.dbFileName, config.toProperties());
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public void close() {
+		if (this.connection != null) {
+			try {
+				this.connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	// 최초 한번만 실행
+	public void createTable() {
+		String fieldString = "";
+		fieldString = fieldString + "idx INT PRIMARY KEY";
+		fieldString = fieldString + ", name TEXT";
+		fieldString = fieldString + ", middleScore INT";
+		fieldString = fieldString + ", finalScore INT";
+		String query = "CREATE TABLE " + this.dbTableName + " (" + fieldString + ")";
+		try {
+			Statement statement = this.connection.createStatement();
+			statement.executeUpdate(query);
+			statement.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+  // 어떤 생성자에도 사용 가능한 코드
+	public void createTable(T t) {
+		Class<?> dataClass = t.getClass(); 
+		Field[] dataClassFields = dataClass.getDeclaredFields();
+		
+		String fieldString = "";
+		
+		for (Field field: dataClassFields) {
+			if(!fieldString.isEmpty()) {
+				fieldString = fieldString + ",";
+			}
+			String fieldName = field.getName();
+			String fieldType = field.getType().toString();
+			fieldString = fieldString + fieldName;
+			if (fieldName.matches("idx")) {
+				fieldString = fieldString + " INTEGER PRIMARY KEY AUTOINCREMENT";
+			}else if(fieldType.matches("(int|long)")) {
+				fieldString = fieldString + " INTEGER";
+			}else if(fieldType.matches("(float|double)")) {
+				fieldString = fieldString + " REAL";
+			}else if(fieldType.matches(".*String")) {
+				fieldString = fieldString + " TEXT";
+			}
+		}
+//		fieldString = fieldString + "idx INT PRIMARY KEY";
+//		fieldString = fieldString + ", name TEXT";
+//		fieldString = fieldString + ", middleScore INT";
+//		fieldString = fieldString + ", finalScore INT";
+		String query = "CREATE TABLE " + this.dbTableName + " (" + fieldString + ")";
+//		String query = "CREATE TABLE " + this.dbTableName + " (idx INT PRIMARY KEY, name TEXT, middleScore INT, finalScore INT)";
+		try {
+			Statement statement = this.connection.createStatement();
+			statement.executeUpdate(query);
+			statement.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+}
