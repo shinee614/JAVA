@@ -8,7 +8,7 @@ import java.sql.Statement;
 
 import org.sqlite.SQLiteConfig;
 
-public class DB<T> { //DB에 Generic <T> 선언
+public class DB<T> { // DB에 Generic <T> 선언
 	private Connection connection;
 	private String dbFileName;
 	private String dbTableName;
@@ -63,17 +63,17 @@ public class DB<T> { //DB에 Generic <T> 선언
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-  // 어떤 생성자에도 사용 가능한 코드
+
 	public void createTable(T t) {
-		Class<?> dataClass = t.getClass(); 
+		Class<?> dataClass = t.getClass();
 		Field[] dataClassFields = dataClass.getDeclaredFields();
-		
+
 		String fieldString = "";
-		
-		for (Field field: dataClassFields) {
-			if(!fieldString.isEmpty()) {
+
+		for (Field field : dataClassFields) {
+			if (!fieldString.isEmpty()) {
 				fieldString = fieldString + ",";
 			}
 			String fieldName = field.getName();
@@ -81,11 +81,11 @@ public class DB<T> { //DB에 Generic <T> 선언
 			fieldString = fieldString + fieldName;
 			if (fieldName.matches("idx")) {
 				fieldString = fieldString + " INTEGER PRIMARY KEY AUTOINCREMENT";
-			}else if(fieldType.matches("(int|long)")) {
+			} else if (fieldType.matches("(int|long|short)")) {
 				fieldString = fieldString + " INTEGER";
-			}else if(fieldType.matches("(float|double)")) {
+			} else if (fieldType.matches("(float|double)")) {
 				fieldString = fieldString + " REAL";
-			}else if(fieldType.matches(".*String")) {
+			} else if (fieldType.matches(".*String")) {
 				fieldString = fieldString + " TEXT";
 			}
 		}
@@ -102,6 +102,68 @@ public class DB<T> { //DB에 Generic <T> 선언
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void insertData(Student student) {
+		String fieldString = "";
+		fieldString = fieldString + "name";
+		fieldString = fieldString + ", middleScore";
+		fieldString = fieldString + ", finalScore";
+		String valueString = "";
+		valueString = valueString + "'" + student.name + "'";
+		valueString = valueString + "'" + student.middleScore + "'";
+		valueString = valueString + "'" + student.finalScore + "'";
+		String query = "INSERT INTO  i" + this.dbTableName + " (name, middleScore, finalScore) VALUES('" + student.name
+				+ "','" + student.middleScore + "','" + student.finalScore + "')";
+		try {
+			Statement statement = this.connection.createStatement();
+			statement.executeUpdate(query);
+			statement.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void insertData(T t) {
+		Class<?> dataClass = t.getClass();
+		Field[] dataClassFields = dataClass.getDeclaredFields();
 		
+		String fieldString = "";
+		String valueString = "";
+		
+		for (Field field: dataClassFields) {
+			String fieldName = field.getName();
+			String fieldType = field.getType().toString();
+			if (fieldName.matches("idx")) {
+				continue;
+			}
+			if (!fieldString.isEmpty()) {
+				fieldString = fieldString + ",";
+			}
+			if (!valueString.isEmpty()) {
+				valueString = valueString + ",";
+			}
+			fieldString = fieldString + fieldName;
+			try {
+				if(fieldType.matches(".*String")) {
+					valueString = valueString + "'" + field.get(t) + "'";
+			} else{
+				valueString = valueString + field.get(t);
+			}
+			}catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		String query = "INSERT INTO " + this.dbTableName + " (" + fieldString + ") VALUES (" + valueString + ")";
+		try {
+			Statement statement = this.connection.createStatement();
+			statement.executeUpdate(query);
+			statement.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
