@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 
 /**
@@ -25,14 +26,29 @@ public class HomeController {
 
 	@RequestMapping(value = "/create", method = RequestMethod.GET)
 	public String create(Locale locale, Model model) {
-		DB db = new DB<Color>("c:\\tomcat\\color.db", "color");  //DB에 Generic으로 생성
+		DB db = new DB<Memo>("c:\\tomcat\\color.db", "memo");
 		
 		if(db.open()) {
-			db.createTable(new Color()); //생성자
+			db.createTable(new Memo());
 			model.addAttribute("message","create success");
 			db.close();
 		}else{
 			model.addAttribute("message", "create fail");
+		};
+		
+		return "message";
+	}
+	
+	@RequestMapping(value = "/insert", method = RequestMethod.GET)
+	public String insert(Locale locale, Model model, @RequestParam("name") String name, @RequestParam("middleScore") int middleScore, @RequestParam("finalScore") int finalScore) {
+		DB db = new DB<Student>("c:\\tomcat\\student.db", "student");
+		
+		if(db.open()) {
+			db.insertData(new Student(name, middleScore, finalScore));
+			model.addAttribute("message","입력이 완료되었습니다.");
+			db.close();
+		}else{
+			model.addAttribute("message", "입력이 실패하였습니다.");
 		};
 		
 		return "message";
